@@ -1,0 +1,579 @@
+---
+title: "Big Data Challenge 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+How GDP, health expenditure, education, life expectancy impact the prevalencedrug users per country
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# echo=FALSE will stop the code chunk from appearing in the knit document
+# warning=FALSE and message=FALSE will stop R messages from appearing in the knit document
+library(tidyverse)
+library(dbplyr)
+#library(expss)
+library(ggplot2)
+path <- "https://raw.githubusercontent.com/ntaback/UofT_STA130/master/Fall2018/Finalproject/"
+
+democracyindex2017 <- read_csv(paste0(path,"democracyindex2017.csv"))
+education_cia2017 <- read_csv(paste0(path,"education_cia2017.csv"))
+gdpppp_cia2017 <- read_csv(paste0(path,"gdpppp_cia2017.csv"))
+lifeexpect_cia2017 <- read_csv(paste0(path,"lifeexpect_cia2017.csv"))
+healthexpend_cia2017 <- read_csv(paste0(path,"healthexpend_cia2017.csv"))
+internetusers_cia2017 <- read_csv(paste0(path,"internetusers_cia2017.csv"))
+telephonelines_cia2017 <- read_csv(paste0(path,"telephonelines_cia2017.csv"))
+population_cia2017 <- read_csv(paste0(path,"population_cia2017.csv"))
+world_regions <- read_csv(paste0(path,"world_regions.csv"))
+prevalence_cannabis_use <- read.csv("C:\\Users\\anhmi\\Documents\\data o C\\Documents\\Anh Minh Nguyen\\Self-study\\Big Data Challenge 2019\\My data\\Sheet_1_data.csv", header = TRUE) #change the path to your file path 
+```
+
+## Filter by regions
+
+From the World Regions file, create different table for different regions
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+Europe <- filter(world_regions, Region == "Europe")
+Africa <- filter(world_regions, Region == "Africa")
+North_America <- filter(world_regions, Region == "North America")
+Arab <- filter(world_regions, Region == "Arab States")
+Asia <- filter(world_regions, Region == "Asia & Pacific")
+South_America <- filter(world_regions, Region == "South/Latin America")
+
+```
+
+
+
+## The average GDP for each regions
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#Find the Average GDP for each regions, then create a table with all new average GDP just found 
+new_GDP_table <-gdpppp_cia2017%>%group_by(Country)%>%summarise(GDP_per_capita = as.numeric(gsub("[\\$,]","",`GDP - PER CAPITA (PPP)`))) #change the GDP column from character to number
+
+Europe_join_GDP <- inner_join(x = Europe, y = new_GDP_table,by = 'Country')
+Europe_Total_GDP <- Europe_join_GDP%>%select(GDP_per_capita)%>%sum()
+Europe_average_GDP <- Europe_Total_GDP/as.numeric(count(Europe_join_GDP))
+
+Africa_join_GDP <- inner_join(x = Africa, y =new_GDP_table,by = 'Country')
+Africa_Total_GDP <- Africa_join_GDP%>%select(GDP_per_capita)%>%sum()
+Africa_average_GDP <- Africa_Total_GDP/as.numeric(count(Africa_join_GDP))
+
+
+North_America_join_GDP <- inner_join(x = North_America, y = new_GDP_table,by = 'Country')
+North_America_Total_GDP <- North_America_join_GDP%>%select(GDP_per_capita)%>%sum()
+North_America_average_GDP <- North_America_Total_GDP/as.numeric(count(North_America_join_GDP))
+
+
+Arab_join_GDP <- inner_join(x = Arab, y =new_GDP_table,by = 'Country')
+Arab_Total_GDP <- Arab_join_GDP%>%select(GDP_per_capita)%>%sum()
+Arab_average_GDP <- Arab_Total_GDP/as.numeric(count(Arab_join_GDP))
+
+
+Asia_join_GDP <- inner_join(x = Asia, y =new_GDP_table,by = 'Country')
+Asia_Total_GDP <- Asia_join_GDP%>%select(GDP_per_capita)%>%sum()
+Asia_average_GDP <- Asia_Total_GDP/as.numeric(count(Asia_join_GDP))
+
+
+South_America_join_GDP <- inner_join(x = South_America, y =new_GDP_table,by = 'Country')
+South_America_Total_GDP <- South_America_join_GDP%>%select(GDP_per_capita)%>%sum()
+South_America_average_GDP <- South_America_Total_GDP/as.numeric(count(South_America_join_GDP))
+
+
+#Average_GDP_table <- matrix(c(Europe_average_GDP, Africa_average_GDP, North_America_average_GDP, #Arab_average_GDP, Asia_average_GDP, South_America_average_GDP), ncol = 6)
+#rownames(Average_GDP_table) <- c("Average_GDP")
+#colnames(Average_GDP_table) <- c("Europe", "Africa", "North_America", "Arab", "Asia", "South_America")
+#Average_GDP_table1 <-data.frame(Average_GDP_table)
+#Average_GDP_table1["Europe"]
+region_name <- c("Europe", "Africa", "North_America", "Arab", "Asia", "South_America")
+region_GDP <-  c(Europe_average_GDP, Africa_average_GDP, North_America_average_GDP, Arab_average_GDP, Asia_average_GDP, South_America_average_GDP)
+Average_GDP_table <- data.frame(region_name, region_GDP, stringsAsFactors = FALSE)
+Average_GDP_table
+
+
+
+```
+
+##The average democracy score by each region 
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+Europe_democracy_relat <- inner_join(x = democracyindex2017, y = Europe, by = "Country") 
+Europe_democracy_table <- Europe_democracy_relat %>% group_by(Country)%>% summarise(demo_score = as.numeric(Score))
+Europe_total_demo <- Europe_democracy_table%>%select(demo_score)%>%sum()
+Europe_average_demo <- Europe_total_demo/as.numeric(count(Europe_democracy_table))
+
+Africa_democracy_relat <- inner_join(x = democracyindex2017, y = Africa, by = "Country") 
+Africa_democracy_table <- Africa_democracy_relat %>% group_by(Country)%>% summarise(demo_score = as.numeric(Score))
+Africa_total_demo <- Africa_democracy_table%>%select(demo_score)%>%sum()
+Africa_average_demo <- Africa_total_demo/as.numeric(count(Africa_democracy_table))
+
+North_America_democracy_relat <- inner_join(x = democracyindex2017, y = North_America, by = "Country") 
+North_America_democracy_table <- North_America_democracy_relat %>% group_by(Country)%>% summarise(demo_score = as.numeric(Score))
+North_America_total_demo <- North_America_democracy_table%>%select(demo_score)%>%sum()
+North_America_average_demo <- North_America_total_demo/as.numeric(count(North_America_democracy_table))
+
+South_America_democracy_relat <- inner_join(x = democracyindex2017, y = South_America, by = "Country") 
+South_America_democracy_table <- South_America_democracy_relat %>% group_by(Country)%>% summarise(demo_score = as.numeric(Score))
+South_America_total_demo <- South_America_democracy_table%>%select(demo_score)%>%sum()
+South_America_average_demo <- South_America_total_demo/as.numeric(count(South_America_democracy_table))
+
+Arab_democracy_relat <- inner_join(x = democracyindex2017, y = Arab, by = "Country") 
+Arab_democracy_table <- Arab_democracy_relat %>% group_by(Country)%>% summarise(demo_score = as.numeric(Score))
+Arab_total_demo <- Arab_democracy_table%>%select(demo_score)%>%sum()
+Arab_average_demo <- Arab_total_demo/as.numeric(count(Arab_democracy_table))
+
+Asia_democracy_relat <- inner_join(x = democracyindex2017, y = Asia, by = "Country") 
+Asia_democracy_table <- Asia_democracy_relat %>% group_by(Country)%>% summarise(demo_score = as.numeric(Score))
+Asia_total_demo <- Asia_democracy_table%>%select(demo_score)%>%sum()
+Asia_average_demo <- Asia_total_demo/as.numeric(count(Asia_democracy_table))
+#new_democracy_table <- democracyindex2017 %>% group_by(Country)%>%summarise(demo_score = as.numeric(Score)) #change the GDP column from character to number
+
+region_name <- c("Europe", "Africa", "North_America", "Arab", "Asia", "South_America")
+region_demo <-  c(Europe_average_demo, Africa_average_demo, North_America_average_demo, Arab_average_demo, Asia_average_demo, South_America_average_demo)
+Average_demo_table <- data.frame(region_name, region_demo, stringsAsFactors = FALSE)
+Average_demo_table
+```
+
+## The average population by region 
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+Europe_population <- inner_join(x = population_cia2017, y = Europe, by = "Country")
+Europe_total_population <- Europe_population%>%select(POPULATION)%>%sum()
+Europe_average_population <- Europe_total_population/as.numeric(count(Europe_population))
+
+Africa_population <- inner_join(x = population_cia2017, y = Africa, by = "Country")
+Africa_total_population <- Africa_population%>%select(POPULATION)%>%sum()
+Africa_average_population <- Africa_total_population/as.numeric(count(Africa_population))
+
+North_America_population <- inner_join(x = population_cia2017, y = North_America, by = "Country")
+North_America_total_population <- North_America_population%>%select(POPULATION)%>%sum()
+North_America_average_population <- North_America_total_population/as.numeric(count(North_America_population))
+
+South_America_population <- inner_join(x = population_cia2017, y = South_America, by = "Country")
+South_America_total_population <- South_America_population%>%select(POPULATION)%>%sum()
+South_America_average_population <- South_America_total_population/as.numeric(count(South_America_population))
+
+Arab_population <- inner_join(x = population_cia2017, y = Arab, by = "Country")
+Arab_total_population <- Arab_population%>%select(POPULATION)%>%sum()
+Arab_average_population <- Arab_total_population/as.numeric(count(Arab_population))
+
+Asia_population <- inner_join(x = population_cia2017, y = Asia, by = "Country")
+Asia_total_population <- Asia_population%>%select(POPULATION)%>%sum()
+Asia_average_population <- Asia_total_population/as.numeric(count(Asia_population))
+
+region_name <- c("Europe", "Africa", "North_America", "Arab", "Asia", "South_America")
+region_population <-  c(Europe_average_population, Africa_average_population, North_America_average_population, Arab_average_population, Asia_average_population, South_America_average_population)
+Average_population_table <- data.frame(region_name, region_population, stringsAsFactors = FALSE)
+Average_population_table
+```
+
+## The average life expectancy for each region 
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#Find the Average Life Expectancy for each regions, then create a table with all new average life expectancy just found 
+LE_table <- lifeexpect_cia2017%>%group_by(Country)%>%summarise(LE_per_capita = as.numeric(gsub("[\\$,]","",`(YEARS)`))) #change the LE column from character to number
+
+Europe_join_LE <- inner_join(x = Europe, y = LE_table,by = 'Country')
+Europe_Total_LE <- Europe_join_LE%>%select(LE_per_capita)%>%sum()
+Europe_average_LE <- Europe_Total_LE/as.numeric(count(Europe_join_LE))
+
+Africa_join_LE <- inner_join(x = Africa, y =LE_table,by = 'Country')
+Africa_Total_LE <- Africa_join_LE%>%select(LE_per_capita)%>%sum()
+Africa_average_LE <- Africa_Total_LE/as.numeric(count(Africa_join_LE))
+
+
+North_America_join_LE <- inner_join(x = North_America, y = LE_table,by = 'Country')
+North_America_Total_LE <- North_America_join_LE%>%select(LE_per_capita)%>%sum()
+North_America_average_LE <- North_America_Total_LE/as.numeric(count(North_America_join_LE))
+
+
+Arab_join_LE <- inner_join(x = Arab, y =LE_table,by = 'Country')
+Arab_Total_LE <- Arab_join_LE%>%select(LE_per_capita)%>%sum()
+Arab_average_LE <- Arab_Total_LE/as.numeric(count(Arab_join_LE))
+
+
+Asia_join_LE <- inner_join(x = Asia, y =LE_table,by = 'Country')
+Asia_Total_LE <- Asia_join_LE%>%select(LE_per_capita)%>%sum()
+Asia_average_LE <- Asia_Total_LE/as.numeric(count(Asia_join_LE))
+
+
+South_America_join_LE <- inner_join(x = South_America, y =LE_table,by = 'Country')
+South_America_Total_LE <- South_America_join_LE%>%select(LE_per_capita)%>%sum()
+South_America_average_LE <- South_America_Total_LE/as.numeric(count(South_America_join_LE))
+
+
+region_name <- c("Europe", "Africa", "North_America", "Arab", "Asia", "South_America")
+region_life_expectancy <-  c(Europe_average_LE, Africa_average_LE, North_America_average_LE, Arab_average_LE, Asia_average_LE, South_America_average_LE)
+Average_LE_table <- data.frame(region_name, region_life_expectancy, stringsAsFactors = FALSE)
+Average_LE_table
+
+```
+
+## The average Internet Users in each region 
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#Find the Average Internet Users for each regions, then create a table with all new average internet users just found 
+IU_table <- internetusers_cia2017%>%group_by(Country)%>%summarise(IU_per_capita = as.numeric(gsub("[\\$,]","",`INTERNET USERS`))) #change the IU column from character to number
+
+Europe_join_IU <- inner_join(x = Europe, y = IU_table,by = 'Country')
+Europe_Total_IU <- Europe_join_IU%>%select(IU_per_capita)%>%sum()
+Europe_average_IU <- Europe_Total_IU/as.numeric(count(Europe_join_IU))
+
+Africa_join_IU <- inner_join(x = Africa, y =IU_table,by = 'Country')
+Africa_Total_IU <- Africa_join_IU%>%select(IU_per_capita)%>%sum()
+Africa_average_IU <- Africa_Total_IU/as.numeric(count(Africa_join_IU))
+
+
+North_America_join_IU <- inner_join(x = North_America, y = IU_table,by = 'Country')
+North_America_Total_IU <- North_America_join_IU%>%select(IU_per_capita)%>%sum()
+North_America_average_IU <- North_America_Total_IU/as.numeric(count(North_America_join_IU))
+
+
+Arab_join_IU <- inner_join(x = Arab, y =IU_table,by = 'Country')
+Arab_Total_IU <- Arab_join_IU%>%select(IU_per_capita)%>%sum()
+Arab_average_IU <- Arab_Total_IU/as.numeric(count(Arab_join_IU))
+
+
+Asia_join_IU <- inner_join(x = Asia, y =IU_table,by = 'Country')
+Asia_Total_IU <- Asia_join_IU%>%select(IU_per_capita)%>%sum()
+Asia_average_IU <- Asia_Total_IU/as.numeric(count(Asia_join_IU))
+
+
+South_America_join_IU <- inner_join(x = South_America, y =IU_table,by = 'Country')
+South_America_Total_IU <- South_America_join_IU%>%select(IU_per_capita)%>%sum()
+South_America_average_IU <- South_America_Total_IU/as.numeric(count(South_America_join_IU))
+
+
+region_name <- c("Europe", "Africa", "North_America", "Arab", "Asia", "South_America")
+region_internet_users <-  c(Europe_average_IU, Africa_average_IU, North_America_average_IU, Arab_average_IU, Asia_average_IU, South_America_average_IU)
+Average_IU_table <- data.frame(region_name, region_internet_users, stringsAsFactors = FALSE)
+Average_IU_table
+```
+
+## The average education expenditure (based on % of GDP) in each region
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# delete the 'Rank' and 'Date of Information' column in table education_cia2017
+education_cia20171 <- education_cia2017 %>% select(-starts_with("Rank"))
+new_edu_table <- education_cia20171 %>% select(-starts_with("Date"))
+
+Europe_join_edu <- inner_join(x = Europe, y = new_edu_table, by = 'Country')
+Europe_Total_edu <- Europe_join_edu%>%select(4)%>%sum()
+Europe_average_edu <- Europe_Total_edu/as.numeric(count(Europe_join_edu))
+
+Africa_join_edu <- inner_join(x = Africa, y = new_edu_table, by = 'Country')
+Africa_Total_edu <- Africa_join_edu%>%select(4)%>%sum()
+Africa_average_edu <- Africa_Total_edu/as.numeric(count(Africa_join_edu))
+
+North_America_join_edu <- inner_join(x = North_America, y = new_edu_table, by = 'Country')
+North_America_Total_edu <- North_America_join_edu%>%select(4)%>%sum()
+North_America_average_edu <- North_America_Total_edu/as.numeric(count(North_America_join_edu))
+
+Arab_join_edu <- inner_join(x = Arab_States, y = new_edu_table, by = 'Country')
+Arab_Total_edu <- Arab_join_edu%>%select(4)%>%sum()
+Arab_average_edu <- Arab_Total_edu/as.numeric(count(Arab_join_edu))
+
+Asia_join_edu <- inner_join(x = Asia_Pacific, y = new_edu_table, by = 'Country')
+Asia_Total_edu <- Asia_join_edu%>%select(4)%>%sum()
+Asia_average_edu <- Asia_Total_edu/as.numeric(count(Asia_join_edu))
+
+South_America_join_edu <- inner_join(x = South_America, y = new_edu_table, by = 'Country')
+South_America_Total_edu <- South_America_join_edu%>%select(4)%>%sum()
+South_America_average_edu <- South_America_Total_edu/as.numeric(count(South_America_join_edu))
+
+region_name <- c("Europe", "Africa", "North_America", "Arab", "Asia", "South_America")
+region_edu <-  c(Europe_average_edu, Africa_average_edu, North_America_average_edu, Arab_average_edu, Asia_average_edu, South_America_average_edu)
+Average_edu_table <- data.frame(region_name, region_edu, stringsAsFactors = FALSE)
+Average_edu_table
+```
+
+## The average of health expenditure (based on % of GDP) in each region 
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# delete "Rank" and the 'Date of Information' column in table lifeexpect_cia2017
+healthexpend_cia20171 <- healthexpend_cia2017 %>% select(-starts_with("Rank"))
+new_healthexpend_table <- healthexpend_cia20171 %>% select(-starts_with("Date"))
+
+Europe_join_healthexpend <- inner_join(x = Europe, y = new_healthexpend_table, by = 'Country')
+Europe_Total_healthexpend <- Europe_join_healthexpend%>%select(4)%>%sum()
+Europe_average_healthexpend <- Europe_Total_healthexpend/as.numeric(count(Europe_join_healthexpend))
+
+Africa_join_healthexpend <- inner_join(x = Africa, y = new_healthexpend_table, by = 'Country')
+Africa_Total_healthexpend <- Africa_join_healthexpend%>%select(4)%>%sum()
+Africa_average_healthexpend <- Africa_Total_healthexpend/as.numeric(count(Africa_join_healthexpend))
+
+North_America_join_healthexpend <- inner_join(x = North_America, y = new_healthexpend_table, by = 'Country')
+North_America_Total_healthexpend <- North_America_join_healthexpend%>%select(4)%>%sum()
+North_America_average_healthexpend <- North_America_Total_healthexpend/as.numeric(count(North_America_join_healthexpend))
+
+Arab_join_healthexpend <- inner_join(x = Arab_States, y = new_healthexpend_table, by = 'Country')
+Arab_Total_healthexpend <- Arab_join_healthexpend%>%select(4)%>%sum()
+Arab_average_healthexpend <- Arab_Total_healthexpend/as.numeric(count(Arab_join_healthexpend))
+
+Asia_join_healthexpend <- inner_join(x = Asia_Pacific, y = new_healthexpend_table, by = 'Country')
+Asia_Total_healthexpend <- Asia_join_healthexpend%>%select(4)%>%sum()
+Asia_average_healthexpend <- Asia_Total_healthexpend/as.numeric(count(Asia_join_healthexpend))
+
+South_America_join_healthexpend <- inner_join(x = South_America, y = new_healthexpend_table, by = 'Country')
+South_America_Total_healthexpend <- South_America_join_healthexpend%>%select(4)%>%sum()
+South_America_average_healthexpend <- South_America_Total_healthexpend/as.numeric(count(South_America_join_healthexpend))
+
+region_name <- c("Europe", "Africa", "North_America", "Arab", "Asia", "South_America")
+region_healthexpend <-  c(Europe_average_healthexpend, Africa_average_healthexpend, North_America_average_healthexpend, Arab_average_healthexpend, Asia_average_healthexpend, South_America_average_healthexpend)
+Average_healthexpend_table <- data.frame(region_name, region_healthexpend, stringsAsFactors = FALSE)
+Average_healthexpend_table
+```
+
+
+## Prevalence of cannabis in each region
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#1. Clean the prevalence data set, only pick the best measure names
+clean_prevalence <- filter(prevalence_cannabis_use, Measure.Names == "Best")
+clean_prevalence
+
+Europe_prevalence <- inner_join(x = Europe, y = clean_prevalence)
+
+Africa_prevalence <- inner_join(x = Africa, y = clean_prevalence)
+
+North_America_prevalence <- inner_join(x = North_America, y = clean_prevalence)
+
+South_America_prevalence <- inner_join(x = South_America, y = clean_prevalence)
+
+Arab_prevalence <- inner_join(x = Arab, y = clean_prevalence)
+
+Asia_prevalence <- inner_join(x = Asia, y = clean_prevalence)
+
+Europe_prev_avg <- mean(Europe_prevalence$Measure.Values)
+Africa_prev_avg <- mean(Africa_prevalence$Measure.Values)
+NA_prev_avg <- mean(North_America_prevalence$Measure.Values)
+SA_prev_avg <- mean(South_America_prevalence$Measure.Values)
+Arab_prev_avg <- mean(Arab_prevalence$Measure.Values)
+Asia_prev_avg <- mean(Asia_prevalence$Measure.Values)
+
+region_name <- c("Europe", "Africa", "North_America", "Arab", "Asia", "South_America")
+region_prev_age <-  c(Europe_prev_avg, Africa_prev_avg, NA_prev_avg, Arab_prev_avg, Asia_prev_avg, SA_prev_avg)
+Average_prev_table <- data.frame(region_name, region_prev_age, stringsAsFactors = FALSE)
+Average_prev_table
+
+#create a table of prevalence cannabis 
+#regression table 
+#graph the relationship 
+
+```
+
+## Corelation between cannabis prevalence and GDP
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#Average_prev_table ~ Average_GDP_table
+GDP_cannabis<- inner_join(x = Average_prev_table, y = Average_GDP_table, by = "region_name")
+GDP_cannabis
+mod_GDP_cannabis <- lm(region_prev_age ~ region_GDP, data = GDP_cannabis)
+mod_GDP_cannabis_summary <- summary(mod_GDP_cannabis)
+mod_GDP_cannabis_summary$coefficients
+
+#graph the plot
+GDP_cannabis_plot <- GDP_cannabis %>%
+ ggplot(aes(region_GDP, region_prev_age,)) +
+ geom_point(aes(col = region_name)) +
+ theme_minimal()+
+  geom_smooth(method="loess", se=F) +
+  ggtitle("The relationship between cannabis use and GDP of each world region ")
+GDP_cannabis_plot
+
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+demo_cannabis<- inner_join(x = Average_prev_table, y = Average_demo_table, by = "region_name")
+demo_cannabis
+mod_demo_cannabis <- lm(region_prev_age ~ region_demo, data = demo_cannabis)
+mod_demo_cannabis_summary <- summary(mod_demo_cannabis)
+mod_demo_cannabis_summary$coefficients
+
+#graph the plot
+demo_cannabis_plot <- demo_cannabis %>%
+ ggplot(aes(region_demo, region_prev_age,)) +
+ geom_point(aes(col = region_name)) +
+ theme_minimal()+
+  geom_smooth(method="loess", se=F) +
+  ggtitle("The relationship between cannabis use and democracy of each world region ")
+demo_cannabis_plot
+```
+
+## Correlation between cannabis use and population 
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+population_cannabis<- inner_join(x = Average_prev_table, y = Average_population_table, by = "region_name")
+population_cannabis
+mod_population_cannabis <- lm(region_prev_age ~ region_population, data = population_cannabis)
+mod_population_cannabis_summary <- summary(mod_population_cannabis)
+mod_population_cannabis_summary$coefficients
+
+#graph the plot
+population_cannabis_plot <- population_cannabis %>%
+ ggplot(aes(region_population, region_prev_age,)) +
+ geom_point(aes(col = region_name)) +
+ theme_minimal()+
+  geom_smooth(method="loess", se=F) +
+  ggtitle("The relationship between cannabis use and population of each world region ")
+population_cannabis_plot
+
+```
+
+## Correlation between cannabis use and life expectancy 
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+LE_cannabis<- inner_join(x = Average_prev_table, y = Average_LE_table, by = "region_name")
+LE_cannabis
+mod_LE_cannabis <- lm(region_prev_age ~ region_life_expectancy, data = LE_cannabis)
+mod_LE_cannabis_summary <- summary(mod_LE_cannabis)
+mod_LE_cannabis_summary$coefficients
+
+#graph the plot
+LE_cannabis_plot <- LE_cannabis %>%
+ ggplot(aes(region_life_expectancy, region_prev_age,)) +
+ geom_point(aes(col = region_name)) +
+ theme_minimal()+
+  geom_smooth(method="loess", se=F) +
+  ggtitle("The relationship between cannabis use and life expectancy of each world region ")
+LE_cannabis_plot
+```
+
+## Correlation between cannabis use and education
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+edu_cannabis<- inner_join(x = Average_prev_table, y = Average_edu_table, by = "region_name")
+edu_cannabis
+mod_edu_cannabis <- lm(region_prev_age ~ region_edu, data = edu_cannabis)
+mod_edu_cannabis_summary <- summary(mod_edu_cannabis)
+mod_edu_cannabis_summary$coefficients
+
+#graph the plot
+edu_cannabis_plot <- edu_cannabis %>%
+ ggplot(aes(region_edu, region_prev_age,)) +
+ geom_point(aes(col = region_name)) +
+ theme_minimal()+
+  geom_smooth(method="loess", se=F) +
+  ggtitle("The relationship between cannabis use and education of each world region ")
+edu_cannabis_plot
+
+```
+
+## Corelation between cannabis use and health expense 
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+health_cannabis<- inner_join(x = Average_prev_table, y = Average_healthexpend_table, by = "region_name")
+health_cannabis
+mod_health_cannabis <- lm(region_prev_age ~ region_healthexpend, data = health_cannabis)
+mod_health_cannabis_summary <- summary(mod_health_cannabis)
+mod_health_cannabis_summary$coefficients
+
+#graph the plot
+health_cannabis_plot <- health_cannabis %>%
+ ggplot(aes(region_healthexpend, region_prev_age)) +
+ geom_point(aes(col = region_name)) +
+ theme_minimal()+
+  geom_smooth(method="loess", se=F) +
+  ggtitle("The relationship between cannabis use and health expense of each world region ")
+health_cannabis_plot
+
+```
+
+## Correlation between cannabis use and internet users
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+IU_cannabis<- inner_join(x = Average_prev_table, y = Average_IU_table, by = "region_name")
+IU_cannabis
+mod_IU_cannabis <- lm(region_prev_age ~ region_internet_users, data = IU_cannabis)
+mod_IU_cannabis_summary <- summary(mod_IU_cannabis)
+mod_IU_cannabis_summary$coefficients
+
+#graph the plot
+IU_cannabis_plot <- IU_cannabis %>%
+ ggplot(aes(region_internet_users, region_prev_age)) +
+ geom_point(aes(col = region_name)) +
+ theme_minimal()+
+  geom_smooth(method="loess", se=F) +
+  ggtitle("The relationship between cannabis use and internet users of each world region ")
+IU_cannabis_plot
+```
+
+## Correlation between cannabis use and GDP of all countries
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+all_GDP_cannabis <- inner_join(x = clean_prevalence, y = new_GDP_table, by = "Country")
+all_GDP_cannabis <- all_GDP_cannabis%>%select(Country, GDP_per_capita, Measure.Values)
+all_GDP_cannabis <- all_GDP_cannabis%>%rename(cannabis_prev = Measure.Values)
+all_GDP_cannabis
+
+mod_all_GDP_cannabis <- lm(cannabis_prev ~ GDP_per_capita, data = all_GDP_cannabis)
+mod_all_GDP_cannabis_summary <- summary(mod_all_GDP_cannabis)
+mod_all_GDP_cannabis_summary$coefficients
+
+#graph the plot
+all_GDP_cannabis_plot <- all_GDP_cannabis %>%
+ ggplot(aes(GDP_per_capita, cannabis_prev)) +
+ geom_point() +
+ theme_minimal()+
+  geom_smooth(method="loess", se=F) +
+  ggtitle("The relationship between cannabis use and GDP in different countries")
+all_GDP_cannabis_plot
+
+```
+
+## Correlation between cannabis use and population of all countries
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+all_pop_cannabis <- inner_join(x = clean_prevalence, y = population_cia2017, by = "Country")
+all_pop_cannabis <- all_pop_cannabis%>%select(Country, POPULATION, Measure.Values)
+all_pop_cannabis <- all_pop_cannabis%>%rename(cannabis_prev = Measure.Values)
+
+mod_all_pop_cannabis <- lm(cannabis_prev ~ POPULATION, data = all_pop_cannabis)
+mod_all_pop_cannabis_summary <- summary(mod_all_pop_cannabis)
+mod_all_pop_cannabis_summary$coefficients
+
+#graph the plot
+all_pop_cannabis_plot <- all_pop_cannabis %>%
+ ggplot(aes(POPULATION, cannabis_prev)) +
+ geom_point() +
+ theme_minimal()+
+  geom_smooth(method="loess", se=F) +
+  ggtitle("The relationship between prevalence of cannabis use and population in different countries")
+all_pop_cannabis_plot
+
+
+```
+
+## Correlation between cannabis use and life expectancy 
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+all_LE_cannabis <- inner_join(x = clean_prevalence, y = lifeexpect_cia2017, by = "Country")
+all_LE_cannabis <- all_LE_cannabis%>%select(Country, `(YEARS)`, Measure.Values)
+all_LE_cannabis <- all_LE_cannabis%>%rename(cannabis_prev = Measure.Values, life_expect = `(YEARS)`)
+
+mod_all_LE_cannabis <- lm(cannabis_prev ~ life_expect, data = all_LE_cannabis)
+mod_all_LE_cannabis_summary <- summary(mod_all_LE_cannabis)
+mod_all_LE_cannabis_summary$coefficients
+
+#graph the plot
+all_LE_cannabis_plot <- all_LE_cannabis %>%
+ ggplot(aes(life_expect, cannabis_prev)) +
+ geom_point() +
+ theme_minimal()+
+  geom_smooth(method="loess", se=F) +
+  ggtitle("The relationship between prevalence of cannabis use and life expectancy in different countries")
+all_LE_cannabis_plot
+```
+
+## Correlation between cannabis use and and health expenditure
+```{r}
+#not done yet 
+all_HE_cannabis <- inner_join(x = clean_prevalence, y = new_healthexpend_table, by = "Country")
+all_HE_cannabis <- all_HE_cannabis%>%select(Country, `(% OF GDP)`, Measure.Values)
+all_HE_cannabis
+all_LE_cannabis <- all_LE_cannabis%>%rename(cannabis_prev = Measure.Values, percent_of_GDP = `(% OF GDP)`)
+
+mod_all_HE_cannabis <- lm(cannabis_prev ~ percent_of_GDP, data = all_HE_cannabis)
+mod_all_HE_cannabis_summary <- summary(mod_all_HE_cannabis)
+mod_all_HE_cannabis_summary$coefficients
+
+#graph the plot
+all_HE_cannabis_plot <- all_HE_cannabis %>%
+ ggplot(aes(percent_of_GDP, cannabis_prev)) +
+ geom_point() +
+ theme_minimal()+
+  geom_smooth(method="loess", se=F) +
+  ggtitle("The relationship between prevalence of cannabis use and health expenditure in different countries")
+all_HE_cannabis_plot
+```
+
+
